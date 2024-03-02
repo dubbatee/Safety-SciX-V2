@@ -1,0 +1,133 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import statistics
+
+
+### distances to the Small Magellanic Cloud and Large Magellanic Cloud in parsecs ###
+
+DistSMC = 62440
+DistLMC = 49590
+
+### imported metadata from the OGLE IV Catalogue of Delta Scuti Variables into pandaS dataframes ###
+
+pd.options.display.max_rows = 99999
+
+#I band LMC photometry dataframe
+
+dfILMC = pd.read_csv ('lmcdata.csv')
+dfILMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS']
+
+#I band SMC photometry dataframe
+
+dfISMC = pd.read_csv ('smcdata.csv')
+dfISMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS']
+
+### data pre-processing - removing invalid datapoints by thresholding data using an Absolute Magnitude range ###
+
+dfISMC = dfISMC[dfISMC['I'] > 12]
+dfISMC = dfISMC[dfISMC['I'] < 22]  
+
+dfILMC = dfILMC[dfILMC['I'] > 12]
+dfILMC = dfILMC[dfILMC['I'] < 22] 
+
+print(len(dfISMC))
+print(len(dfILMC))
+
+### SMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
+
+#Absolute Magnitude Calculation of SMC Delta Scuti Variables
+
+def MSMC(Imag): 
+    return(Imag - 5*np.log10(DistSMC/10))
+
+#Log(10) of the Fundamental mode Period (fundamental mode brightness fluctuation) of SMC Delta Scuti Variables
+
+def PSMC(p):
+    return(np.log10(p))
+
+
+### LMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
+
+#Absolute Magnitude Calculation of LMC Delta Scuti Variables
+
+def MLMC(I): 
+    return(I - 5*np.log10(DistLMC/10))
+
+#Log(10) of the Fundamental mode Period (fundamental mode brightness fluctuation) of LMC Delta Scuti Variables
+
+def PLMC(p):
+    return(np.log10(p))
+
+### P-L RELATIONSHIP GENERATION (CALIBRATION CURVES TO CALCULATE DISTANCE) ###
+
+#SMC P-L relation calibration curve generated from SMC Delta Scuti Variables
+
+y = ((MSMC(dfISMC['I'])).tolist())
+x = ((PSMC(dfISMC['P_1'])).tolist())
+
+plt.scatter(x, y)
+a, b = np.polyfit(x, y, 1)
+plt.xlabel('Log10 of Period(day)')
+plt.ylabel('Abs I-band Mag')
+LOBF = [i * a + b for i in x]
+plt.plot(x, LOBF, color = "red")
+plt.text(-0.6, -1.0, 'y = ' + format(a.round(2)) + 'x ' + format(b.round(2)))
+plt.title('SMC P-L relationship')
+plt.show()
+
+#LMC P-L relation calibration curve generated from LMC Delta Scuti Variables
+
+w = ((MLMC(dfILMC['I'])).tolist())
+q = ((PLMC(dfILMC['P_1'])).tolist())
+
+plt.scatter(q, w)
+c, d = np.polyfit(q, w, 1)
+plt.xlabel('Log10 of Period(day)')
+plt.ylabel('Abs I-band Mag')
+LOBF = [i * c + d for i in q]
+plt.plot(q, LOBF, color = "red")
+plt.text(-0.6, -1.0, 'y = ' + format(c.round(2)) + 'x ' + format(d.round(2)))
+plt.title('LMC P-L relationship')
+plt.show()
+
+### Calculation of Distances to the SMC and LMC ###
+#using SMC delta scuti variable period data ---> calculate absolute Magnitudes of SMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
+#using LMC delta scuti variable period data ---> calculate absolute Magnitudes of LMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
+
+#LMC P-L calibration curve:
+
+def LMCPL(I, P):
+    var1 = ((np.float64(c) * np.float64(np.log10(P))) + np.float64(d))
+    var2 = ((I) - var1) / 5
+    var3 = 10 * 10 ** var2
+    return var3
+
+dfISMC['dists'] = LMCPL(dfISMC['I'], dfISMC['P_1'])
+medianSMCdist = statistics.median(dfISMC['dists'])
+
+#SMC P-L calibration curve:
+
+def SMCPL(I, P):
+    var1 = ((np.float64(a) * np.float64(np.log10(P))) + np.float64(b))
+    var2 = ((I) - var1) / 5
+    var3 = 10 * 10 ** var2
+    return var3
+
+dfILMC['dists'] = LMCPL(dfILMC['I'], dfILMC['P_1'])
+medianLMCdist = statistics.median(dfILMC['dists'])
+
+
+
+#Error and Results
+
+def SMCperror(dist):
+    print(dist)
+    print(np.abs((dist - 62440) / 62440)*100)
+
+def LMCperror(dist):
+    print(dist)
+    print(np.abs((dist - 49590) / 49590)*100)
+
+SMCperror(medianSMCdist)
+LMCperror(medianLMCdist)
