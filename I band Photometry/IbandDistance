@@ -3,6 +3,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statistics
 
+### GLOSSARY OF VARIABLES AND FUNCTION ARGUMENTS ###
+
+#General##
+
+#I : I band Apparent Magnitude 
+#p : Fundamental mode Period (days)
+
+##SMC Calibration curve##
+
+#x : List that contains the Absolute Magnitude of SMC Delta Scuti Variables (plotted on y axis)
+#y : List that contains the Fundamental Mode Period of SMC Delta Scuti Variables (plotted on x axis)
+#a : gradient of line of best fit for the SMC Period Luminosity relationship calibration curve
+#b : y intercept of line of best fit for the the SMC period Luminosity relationship calibration curve
+
+##LMC Calibration curve##
+
+#q : List that contains the Absolute Magnitude of LMC Delta Scuti Variables (plotted on y axis)
+#w : List that contains the Fundamental Mode Period of LMC Delta Scuti Variables (plotted on x axis)
+#c : gradient of line of best fit for the LMC Period Luminosity relationship calibration curve
+#d : y intercept of line of best fit for the the LMC period Luminosity relationship calibration curve
+
+##Results##
+
+#medianLMCdist : median distance to LMC calculated
+#medianSMCdist : median distance to SMC calculated
 
 ### distances to the Small Magellanic Cloud and Large Magellanic Cloud in parsecs ###
 
@@ -38,8 +63,8 @@ print(len(dfILMC))
 
 #Absolute Magnitude Calculation of SMC Delta Scuti Variables
 
-def MSMC(Imag): 
-    return(Imag - 5*np.log10(DistSMC/10))
+def MSMC(I): 
+    return(I - 5*np.log10(DistSMC/10))
 
 #Log(10) of the Fundamental mode Period (fundamental mode brightness fluctuation) of SMC Delta Scuti Variables
 
@@ -95,7 +120,7 @@ plt.show()
 #using SMC delta scuti variable period data ---> calculate absolute Magnitudes of SMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
 #using LMC delta scuti variable period data ---> calculate absolute Magnitudes of LMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
 
-#LMC P-L calibration curve:
+#LMC P-L calibration curve Results:
 
 def LMCPL(I, P):
     var1 = ((np.float64(c) * np.float64(np.log10(P))) + np.float64(d))
@@ -106,7 +131,7 @@ def LMCPL(I, P):
 dfISMC['dists'] = LMCPL(dfISMC['I'], dfISMC['P_1'])
 medianSMCdist = statistics.median(dfISMC['dists'])
 
-#SMC P-L calibration curve:
+#SMC P-L calibration curve Results:
 
 def SMCPL(I, P):
     var1 = ((np.float64(a) * np.float64(np.log10(P))) + np.float64(b))
@@ -116,8 +141,6 @@ def SMCPL(I, P):
 
 dfILMC['dists'] = LMCPL(dfILMC['I'], dfILMC['P_1'])
 medianLMCdist = statistics.median(dfILMC['dists'])
-
-
 
 #Error and Results
 
