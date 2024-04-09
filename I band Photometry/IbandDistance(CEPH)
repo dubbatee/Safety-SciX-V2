@@ -4,6 +4,31 @@ import matplotlib.pyplot as plt
 import statistics
 from scipy import stats
 
+### GLOSSARY OF VARIABLES AND FUNCTION ARGUMENTS ###
+
+#General##
+
+#I : I band Apparent Magnitude 
+#p : Fundamental mode Period (days)
+
+##SMC Calibration curve##
+
+#x : List that contains the Absolute Magnitude of SMC Cepheid Variables (plotted on y axis)
+#y : List that contains the Fundamental Mode Period of SMC Cepheid Variables (plotted on x axis)
+#a : gradient of line of best fit for the SMC Period Luminosity relationship calibration curve
+#b : y intercept of line of best fit for the the SMC period Luminosity relationship calibration curve
+
+##LMC Calibration curve##
+
+#q : List that contains the Absolute Magnitude of LMC Cepheid Variables (plotted on y axis)
+#w : List that contains the Fundamental Mode Period of LMC Cepheid Variables (plotted on x axis)
+#c : gradient of line of best fit for the LMC Period Luminosity relationship calibration curve
+#d : y intercept of line of best fit for the the LMC period Luminosity relationship calibration curve
+
+##Results##
+
+#medianLMCdist : median distance to LMC calculated
+#medianSMCdist : median distance to SMC calculated
 
 ### distances to the Small Magellanic Cloud and Large Magellanic Cloud in parsecs ###
 
