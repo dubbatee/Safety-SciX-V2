@@ -48,16 +48,46 @@ dfILMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS'
 dfISMC = pd.read_csv ('smcdata.csv')
 dfISMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS']
 
-### data pre-processing - removing invalid datapoints by thresholding data using an Absolute Magnitude range ###
+### data cleaning/pre-processing ###
 
-dfISMC = dfISMC[dfISMC['I'] > 12]
-dfISMC = dfISMC[dfISMC['I'] < 22]  
-
-dfILMC = dfILMC[dfILMC['I'] > 12]
-dfILMC = dfILMC[dfILMC['I'] < 22] 
+#apparent magnitude thresholding - based on OGLE IV telescope saturation and sensitivity limits
 
 print(len(dfISMC))
 print(len(dfILMC))
+
+dfISMC = dfISMC[dfISMC['I'] > 13]
+dfISMC = dfISMC[dfISMC['I'] < 21.5]
+
+dfILMC = dfILMC[dfILMC['I'] > 13]
+dfILMC = dfILMC[dfILMC['I'] < 21.5]
+
+print(len(dfISMC))
+print(len(dfILMC))
+
+#removal of Milkyway Halo Delta Scutis - Equal distance approximation cannot be used with Milkyway Delta Scutis - creating new dataframes SMC: dfCSMC , LMC: dfCLMC - C represents "cleansed"
+
+# coefficients of P-L relationship prior to cleansing - required to determine whether to remove star - the loops below take the true apparent magnitude of a star, and compare it with the apparent magnitude the star should have based on the Line of best fit
+# if the star's apparent magnitude is lower than the line of best fit apparent magnitude by more than 1.5, the code keeps this star in the raw dataframe (dfISMC / dfILMC)
+# if the star's apparent magnitude is greater than this thresholded value (1.5 lower than the LOBF apparent magnitude), the loop adds this star with its ID, apparent magnitude and period to a "cleansed" dataframe (dfCSMC / dfCLMC)
+
+m = -0.5422749933150767 
+n = 19.838896818945663
+k = -2.3490955560897167 
+l = 17.561746217049734
+
+dfCSMC = pd.DataFrame(columns = ['ID', 'I', 'P'])
+for index, row in dfISMC.iterrows():
+    if np.float64(row['I']) > (np.float64(np.log10(row['P_1'])) * m + n - 1.5):
+        dfCSMC.loc[len(dfCSMC.index)] = [row['ID'],row['I'],row['P_1']]
+    else:
+        continue
+
+dfCLMC = pd.DataFrame(columns = ['ID', 'I', 'P'])
+for index, row in dfILMC.iterrows():
+    if np.float64(row['I']) > (np.float64(np.log10(row['P_1'])) * k + l - 1.5):
+        dfCLMC.loc[len(dfCLMC.index)] = [row['ID'],row['I'],row['P_1']]
+    else:
+        continue
 
 ### SMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
 
@@ -70,7 +100,6 @@ def MSMC(I):
 
 def PSMC(p):
     return(np.log10(p))
-
 
 ### LMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
 
@@ -88,8 +117,8 @@ def PLMC(p):
 
 #SMC P-L relation calibration curve generated from SMC Delta Scuti Variables
 
-y = ((MSMC(dfISMC['I'])).tolist())
-x = ((PSMC(dfISMC['P_1'])).tolist())
+y = ((MSMC(dfCSMC['I'])).tolist())
+x = ((PSMC(dfCSMC['P'])).tolist())
 
 plt.scatter(x, y)
 a, b = np.polyfit(x, y, 1)
@@ -99,12 +128,14 @@ LOBF = [i * a + b for i in x]
 plt.plot(x, LOBF, color = "red")
 plt.text(-0.6, -1.0, 'y = ' + format(a.round(2)) + 'x ' + format(b.round(2)))
 plt.title('SMC P-L relationship')
+plt.ylim(-6,4)
+plt.xlim(-1.6,-0.4)
 plt.show()
 
 #LMC P-L relation calibration curve generated from LMC Delta Scuti Variables
 
-w = ((MLMC(dfILMC['I'])).tolist())
-q = ((PLMC(dfILMC['P_1'])).tolist())
+w = ((MLMC(dfCLMC['I'])).tolist())
+q = ((PLMC(dfCLMC['P'])).tolist())
 
 plt.scatter(q, w)
 c, d = np.polyfit(q, w, 1)
@@ -114,13 +145,15 @@ LOBF = [i * c + d for i in q]
 plt.plot(q, LOBF, color = "red")
 plt.text(-0.6, -1.0, 'y = ' + format(c.round(2)) + 'x ' + format(d.round(2)))
 plt.title('LMC P-L relationship')
+plt.ylim(-6,4)
+plt.xlim(-1.6,-0.4)
 plt.show()
 
 ### Calculation of Distances to the SMC and LMC ###
 #using SMC delta scuti variable period data ---> calculate absolute Magnitudes of SMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
 #using LMC delta scuti variable period data ---> calculate absolute Magnitudes of LMC delta scuti variables ---> plug apparent magnitude and calculated absolute magnitude of delta scuti variables into distance modulus ---> find median of calculated distances
 
-#LMC P-L calibration curve Results:
+#LMC P-L calibration curve: Calculating distances to SMC
 
 def LMCPL(I, P):
     var1 = ((np.float64(c) * np.float64(np.log10(P))) + np.float64(d))
@@ -128,10 +161,7 @@ def LMCPL(I, P):
     var3 = 10 * 10 ** var2
     return var3
 
-dfISMC['dists'] = LMCPL(dfISMC['I'], dfISMC['P_1'])
-medianSMCdist = statistics.median(dfISMC['dists'])
-
-#SMC P-L calibration curve Results:
+#SMC P-L calibration curve: Calculating distances to LMC
 
 def SMCPL(I, P):
     var1 = ((np.float64(a) * np.float64(np.log10(P))) + np.float64(b))
@@ -139,10 +169,17 @@ def SMCPL(I, P):
     var3 = 10 * 10 ** var2
     return var3
 
-dfILMC['dists'] = LMCPL(dfILMC['I'], dfILMC['P_1'])
-medianLMCdist = statistics.median(dfILMC['dists'])
+#Adding the distance calculation for each Delta Scuti Variable into their respective Dataframe
 
-#Error and Results
+dfCSMC['dists'] = LMCPL(dfCSMC['I'], dfCSMC['P'])
+dfCLMC['dists'] = SMCPL(dfCLMC['I'], dfCLMC['P'])
+
+#Calculating Median Distance to the SMC and LMC respectively
+
+medianSMCdist = statistics.median(dfCSMC['dists'])
+medianLMCdist = statistics.median(dfCLMC['dists'])
+
+### Results and %Error ###
 
 def SMCperror(dist):
     print(dist)
@@ -152,5 +189,11 @@ def LMCperror(dist):
     print(dist)
     print(np.abs((dist - 49590) / 49590)*100)
 
+print(len(dfISMC) - len(dfCSMC))
+print(len(dfILMC) - len(dfCLMC))
+
 SMCperror(medianSMCdist)
 LMCperror(medianLMCdist)
+
+print(np.quantile(dfCSMC['dists'], [0.1, 0.35, 0.5, 0.65, 0.9]))
+print(np.quantile(dfCLMC['dists'], [0.1, 0.35, 0.5, 0.65, 0.9]))
