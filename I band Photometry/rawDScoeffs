@@ -24,10 +24,12 @@ import statistics
 #c : gradient of line of best fit for the LMC Period Luminosity relationship calibration curve
 #d : y intercept of line of best fit for the the LMC period Luminosity relationship calibration curve
 
-##Results##
+##Results## (raw coeff generation)
 
-#medianLMCdist : median distance to LMC calculated
-#medianSMCdist : median distance to SMC calculated
+# a = gradient of SMC P-L relation
+# b = y intercept of SMC P-L relation
+# c = gradient of LMC P-L relation
+# d = y intercept of LMC P-L relation
 
 ### distances to the Small Magellanic Cloud and Large Magellanic Cloud in parsecs ###
 
