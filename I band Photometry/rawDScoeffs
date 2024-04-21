@@ -1,0 +1,124 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import statistics
+
+### GLOSSARY OF VARIABLES AND FUNCTION ARGUMENTS ###
+
+#General##
+
+#I : I band Apparent Magnitude 
+#p : Fundamental mode Period (days)
+
+##SMC Calibration curve##
+
+#x : List that contains the Absolute Magnitude of SMC Delta Scuti Variables (plotted on y axis)
+#y : List that contains the Fundamental Mode Period of SMC Delta Scuti Variables (plotted on x axis)
+#a : gradient of line of best fit for the SMC Period Luminosity relationship calibration curve
+#b : y intercept of line of best fit for the the SMC period Luminosity relationship calibration curve
+
+##LMC Calibration curve##
+
+#q : List that contains the Absolute Magnitude of LMC Delta Scuti Variables (plotted on y axis)
+#w : List that contains the Fundamental Mode Period of LMC Delta Scuti Variables (plotted on x axis)
+#c : gradient of line of best fit for the LMC Period Luminosity relationship calibration curve
+#d : y intercept of line of best fit for the the LMC period Luminosity relationship calibration curve
+
+##Results##
+
+#medianLMCdist : median distance to LMC calculated
+#medianSMCdist : median distance to SMC calculated
+
+### distances to the Small Magellanic Cloud and Large Magellanic Cloud in parsecs ###
+
+DistSMC = 62440
+DistLMC = 49590
+
+### imported metadata from the OGLE IV Catalogue of Delta Scuti Variables into pandaS dataframes ###
+
+pd.options.display.max_rows = 99999
+
+#I band LMC photometry dataframe
+
+dfILMC = pd.read_csv ('lmcdata.csv')
+dfILMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS']
+
+#I band SMC photometry dataframe
+
+dfISMC = pd.read_csv ('smcdata.csv')
+dfISMC.columns =['ID', 'RA', 'Decl', 'I', 'P_1', 'dP_1', 'ID_OGLE_IV', 'REMARKS']
+
+### data pre-processing - removing invalid datapoints by thresholding data using an Absolute Magnitude range ###
+
+dfISMC = dfISMC[dfISMC['I'] > 13]
+dfISMC = dfISMC[dfISMC['I'] < 21.5]  
+
+dfILMC = dfILMC[dfILMC['I'] > 13]
+dfILMC = dfILMC[dfILMC['I'] < 21.5] 
+
+print(len(dfISMC))
+print(len(dfILMC))
+
+### SMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
+
+#Absolute Magnitude Calculation of SMC Delta Scuti Variables
+
+def MSMC(I): 
+    return(I - 5*np.log10(DistSMC/10))
+
+#Log(10) of the Fundamental mode Period (fundamental mode brightness fluctuation) of SMC Delta Scuti Variables
+
+def PSMC(p):
+    return(np.log10(p))
+
+
+### LMC DISTANCE MODULUS CALCULATIONS AND DATA PROCESSING ###
+
+#Absolute Magnitude Calculation of LMC Delta Scuti Variables
+
+def MLMC(I): 
+    return(I - 5*np.log10(DistLMC/10))
+
+#Log(10) of the Fundamental mode Period (fundamental mode brightness fluctuation) of LMC Delta Scuti Variables
+
+def PLMC(p):
+    return(np.log10(p))
+
+### P-L RELATIONSHIP GENERATION (CALIBRATION CURVES TO CALCULATE DISTANCE) ###
+
+#SMC P-L relation calibration curve generated from SMC Delta Scuti Variables
+
+y = (((dfISMC['I'])).tolist())
+x = ((PSMC(dfISMC['P_1'])).tolist())
+
+plt.scatter(x, y)
+a, b = np.polyfit(x, y, 1)
+plt.xlabel('Log10 of Period(day)')
+plt.ylabel('Abs I-band Mag')
+LOBF = [i * a + b for i in x]
+plt.plot(x, LOBF, color = "red")
+plt.text(-0.6, -1.0, 'y = ' + format(a.round(2)) + 'x ' + format(b.round(2)))
+plt.title('SMC P-L relationship')
+plt.show()
+
+#LMC P-L relation calibration curve generated from LMC Delta Scuti Variables
+
+w = (((dfILMC['I'])).tolist())
+q = ((PLMC(dfILMC['P_1'])).tolist())
+
+plt.scatter(q, w)
+c, d = np.polyfit(q, w, 1)
+plt.xlabel('Log10 of Period(day)')
+plt.ylabel('Abs I-band Mag')
+LOBF = [i * c + d for i in q]
+plt.plot(q, LOBF, color = "red")
+plt.text(-0.6, -1.0, 'y = ' + format(c.round(2)) + 'x ' + format(d.round(2)))
+plt.title('LMC P-L relationship')
+plt.show()
+
+### from the generated relationships, the raw coefficients of the SMC and LMC Delta Scuti P-L relations can be found and then further used in thresholding, as seen in IbandDistance(DS)
+
+print(a,b,)
+print(c,d)
+
+
