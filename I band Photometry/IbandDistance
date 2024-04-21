@@ -10,6 +10,12 @@ import statistics
 #I : I band Apparent Magnitude 
 #p : Fundamental mode Period (days)
 
+#Generated Coefficients from rawDScoeffs#
+m = -0.5422749933150767 
+n = 19.838896818945663
+k = -2.3490955560897167 
+l = 17.561746217049734
+
 ##SMC Calibration curve##
 
 #x : List that contains the Absolute Magnitude of SMC Delta Scuti Variables (plotted on y axis)
@@ -75,10 +81,10 @@ n = 19.838896818945663
 k = -2.3490955560897167 
 l = 17.561746217049734
 
-dfCSMC = pd.DataFrame(columns = ['ID', 'I', 'P'])
-for index, row in dfISMC.iterrows():
-    if np.float64(row['I']) > (np.float64(np.log10(row['P_1'])) * m + n - 1.5):
-        dfCSMC.loc[len(dfCSMC.index)] = [row['ID'],row['I'],row['P_1']]
+dfCSMC = pd.DataFrame(columns = ['ID', 'I', 'P']) #creating a new dataframe for the cleansed data
+for index, row in dfISMC.iterrows(): #looping through raw data dataframe
+    if np.float64(row['I']) > (np.float64(np.log10(row['P_1'])) * m + n - 1.5): # if a specifc star satisfies this condition, it is added into the new dataframe
+        dfCSMC.loc[len(dfCSMC.index)] = [row['ID'],row['I'],row['P_1']] # adds the star at the end of the dataframe (last index)
     else:
         continue
 
