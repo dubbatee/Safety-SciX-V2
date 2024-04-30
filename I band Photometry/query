@@ -1,0 +1,25 @@
+from astroquery.vizier import Vizier
+import astropy.units as u
+import astropy.coordinates as coord
+from astroquery.gaia import Gaia
+import pandas as pd
+import numpy as np
+import matplotlib as plt
+from astropy.time import Time
+
+dfIGB = pd.read_csv ('gb2data.csv')
+dfIGB.columns = ['ID', "Ra", "De", "I", "V", "V-I", "P"]
+print(len(dfIGB))
+
+
+for index, row in dfIGB.iterrows():
+   
+    v = Vizier(catalog="I/352", columns=['*', 'RA_ICRS','DE_ICRS'])#.query_constraints(RA_ICRS=row["Ra"])[0]
+    result = v.query_region(coord.SkyCoord(ra=row['Ra'], dec=row['De'],
+                                            unit=(u.deg, u.deg),
+                                            frame='icrs'),
+                        radius=0.0001*u.deg,
+                        catalog=["I/352"])
+    tmass_table = result[0]['Source','rgeo']
+    print(tmass_table)
+    
