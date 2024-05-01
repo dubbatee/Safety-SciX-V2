@@ -10,16 +10,40 @@ from astropy.time import Time
 dfIGB = pd.read_csv ('gb2data.csv')
 dfIGB.columns = ['ID', "Ra", "De", "I", "V", "V-I", "P"]
 print(len(dfIGB))
-
+cleansedbgds = pd.DataFrame
+cleansedbgds.columns = ['ID', 'Ra', 'De', 'I', 'V', 'V-I', 'P','distance']
 
 for index, row in dfIGB.iterrows():
-   
     v = Vizier(catalog="I/352", columns=['*', 'RA_ICRS','DE_ICRS'])#.query_constraints(RA_ICRS=row["Ra"])[0]
     result = v.query_region(coord.SkyCoord(ra=row['Ra'], dec=row['De'],
                                             unit=(u.deg, u.deg),
                                             frame='icrs'),
                         radius=0.0001*u.deg,
                         catalog=["I/352"])
-    tmass_table = result[0]['Source','rgeo']
-    print(tmass_table)
     
+    if (len(result) == 0):
+        distance = 0
+    else:
+        distance = result[0]['rgeo'][0]
+        cleansedbgds.loc[len(cleansedbgds.index)] = [row['ID'],row['Ra'],row['De'], row['I'], row['V'], row['V-I'], row['P'], result[0]['rgeo'][0]]
+    #print(distance)
+    
+    #    if (len(result) == 0):
+        #distance = 0
+    #else:
+        #distance = result[0]['rgeo'][0]
+
+    
+      
+
+#dfCGB = pd.DataFrame(columns = ['Source', 'Dist'])
+
+#for index, row in dfIGB.iterrows():
+    #result = Vizier.query_region(coord.SkyCoord(ra=row['Ra'], dec=row['De'],
+                                            #unit=(u.deg, u.deg),
+                                            #frame='icrs'),
+                        #radius=0.0001*u.deg,
+                        #catalog=["I/352"])
+    #retrieve = result[0]['Source', 'rgeo']
+    #print(retrieve)
+
